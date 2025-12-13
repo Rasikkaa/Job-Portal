@@ -1,0 +1,407 @@
+.home-screen {
+  min-height: 100vh;
+  background: #ffffff;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+/* Header Styles */
+.header {
+  background: linear-gradient(to bottom, #edf8ff, #fefbfb);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.header-left {
+  flex-shrink: 0;
+}
+
+.header-logo {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0891b2;
+  margin: 0;
+}
+
+/* Navigation Styles */
+.header-nav {
+  display: flex;
+  gap: 8px;
+  flex: 1;
+  justify-content: center;
+}
+
+.nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #666;
+}
+
+.nav-btn:hover {
+  background: rgba(8, 145, 178, 0.1);
+  color: #0891b2;
+}
+
+.nav-btn-active {
+  background: rgba(8, 145, 178, 0.15);
+  color: #0891b2;
+}
+
+.nav-icon {
+  font-size: 20px;
+}
+
+.nav-label {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Header Right Actions */
+.header-right {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #666;
+  font-size: 12px;
+}
+
+.action-btn:hover {
+  background: rgba(8, 145, 178, 0.1);
+  color: #0891b2;
+}
+
+.logout-btn:hover {
+  background: rgba(255, 68, 68, 0.1);
+  color: #ff4444;
+}
+
+.action-icon {
+  font-size: 16px;
+}
+
+.action-label {
+  font-weight: 500;
+}
+
+/* Body Styles */
+.home-body {
+  padding: 20px;
+}
+
+.home-content h2{
+  color: #96a3a3;
+}
+
+.home-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.content-area {
+  background: linear-gradient(to bottom, #edf8ff, #fefbfb);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 40px;
+  text-align: center;
+}
+
+.empty-content h2 {
+  color: #0891b2;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0 0 16px;
+}
+
+.empty-content p {
+  color: #666;
+  font-size: 16px;
+  margin: 0;
+}
+
+.user-welcome {
+  background: rgba(8, 145, 178, 0.1);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 0;
+  border-left: 4px solid #0891b2;
+}
+
+.user-welcome h3 {
+  color: #0891b2;
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0 0 12px;
+}
+
+.user-welcome p {
+  color: #555;
+  font-size: 14px;
+  margin: 4px 0;
+  font-weight: 500;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-size: 18px;
+  color: #0891b2;
+}
+
+/*  Page Styles */
+.page-container h2{
+color: #96a3a3;
+}
+
+/* Change Password Modal Styles */
+.change-password-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.change-password-card {
+  background: linear-gradient(to bottom, #edf8ff, #fefbfb);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  padding: 32px;
+  width: 100%;
+  max-width: 450px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.change-password-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.change-password-header .title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0891b2;
+  margin: 0 0 8px;
+}
+
+.change-password-header .subtitle {
+  color: #666;
+  font-size: 14px;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.button-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.secondary-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid #0891b2;
+  background: transparent;
+  color: #0891b2;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 48px;
+}
+
+.secondary-btn:hover {
+  background: rgba(8, 145, 178, 0.1);
+}
+
+.primary-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: #0891b2;
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 0;
+  box-sizing: border-box;
+  height: 48px;
+}
+
+.primary-btn:hover {
+  background: #0777a3;
+}
+
+.primary-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .header-container {
+    padding: 10px 16px;
+    gap: 12px;
+  }
+  
+  .header-logo {
+    font-size: 20px;
+  }
+  
+  .header-nav {
+    gap: 4px;
+  }
+  
+  .nav-btn {
+    padding: 6px 8px;
+  }
+  
+  .nav-icon {
+    font-size: 18px;
+  }
+  
+  .nav-label {
+    font-size: 10px;
+  }
+  
+  .action-btn {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+  
+  .action-label {
+    display: none;
+  }
+  
+  .home-body {
+    padding: 16px;
+  }
+  
+  .content-area {
+    padding: 24px;
+  }
+  
+  .empty-content h2 {
+    font-size: 24px;
+  }
+  
+  .empty-content p {
+    font-size: 14px;
+  }
+  
+  .user-welcome {
+    padding: 16px;
+  }
+  
+  .user-welcome h3 {
+    font-size: 20px;
+  }
+  
+  .user-welcome p {
+    font-size: 13px;
+  }
+  
+  .change-password-card {
+    padding: 24px;
+    margin: 10px;
+  }
+  
+  .change-password-header .title {
+    font-size: 20px;
+  }
+  
+  .change-password-header .subtitle {
+    font-size: 13px;
+  }
+  
+  .button-row {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .header-container {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .header-left {
+    order: 1;
+    flex: 1;
+    text-align: center;
+  }
+  
+  .header-nav {
+    order: 2;
+    width: 100%;
+    justify-content: space-around;
+    margin-top: 8px;
+  }
+  
+  .header-right {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+    margin-top: 8px;
+  }
+  
+  .nav-btn {
+    padding: 4px 6px;
+  }
+  
+  .content-area {
+    padding: 20px;
+  }
+  
+  .empty-content h2 {
+    font-size: 20px;
+  }
+  
+  .empty-content p {
+    font-size: 13px;
+  }
+}
