@@ -55,7 +55,7 @@ class PostCreateSerializer(serializers.ModelSerializer):
         child=serializers.ImageField(),
         write_only=True,
         required=False,
-        max_length=10
+        max_length=20
     )
     
     class Meta:
@@ -63,8 +63,8 @@ class PostCreateSerializer(serializers.ModelSerializer):
         fields = ['description', 'images']
     
     def validate_images(self, value):
-        if len(value) > 10:
-            raise serializers.ValidationError("Maximum 10 images allowed per post.")
+        if len(value) > 20:
+            raise serializers.ValidationError("Maximum 20 images allowed per post.")
         
         for image in value:
             if image.size > 5 * 1024 * 1024:  # 5MB
@@ -103,7 +103,7 @@ class PostCreateSerializer(serializers.ModelSerializer):
 class ImageAddSerializer(serializers.Serializer):
     images = serializers.ListField(
         child=serializers.ImageField(),
-        max_length=10
+        max_length=20
     )
     
     def validate_images(self, value):
@@ -115,5 +115,19 @@ class ImageAddSerializer(serializers.Serializer):
                 raise serializers.ValidationError("Only image files are allowed.")
         
         return value
+
+
+class PostCommentSerializer(serializers.ModelSerializer):
+    author = AuthorSerializer(source='user', read_only=True)
+    is_owner = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = PostComment
+        fields = ['id', 'author', 'text', 'created_at', 'is_owner']
+        read_only_fields = ['author', 'created_at']
+    
+    def get_is_owner(self, obj):
+        request = self.context.get('request')
+        return request and request.user == obj.user
 
 

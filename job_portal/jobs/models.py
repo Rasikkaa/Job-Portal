@@ -17,6 +17,8 @@ class Job(models.Model):
     location = models.CharField(max_length=255, blank=True, null=True)
     salary = models.CharField(max_length=100, blank=True, null=True)
     job_type = models.CharField(max_length=20, choices=JOB_TYPE_CHOICES, default='fulltime')
+    experience = models.CharField(max_length=100, blank=True, null=True)
+    work_mode = models.CharField(max_length=20, choices=[('remote','Remote'),('hybrid','Hybrid'),('onsite','On-site')], default='onsite', db_index=True)
     publisher = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='jobs')
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)

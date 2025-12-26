@@ -21,8 +21,20 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
-# Media files (optional - uncomment if you don't want to track media)
-# media/
+# Database
+*.db
+
+# Media files (uploaded content)
+media/
+
+# Migrations (optional - uncomment to ignore)
+# */migrations/
+# !*/migrations/__init__.py
+
+# Secret keys and sensitive data
+secret_key.txt
+*.key
+*.pem
 
 # IDE files
 .vscode/

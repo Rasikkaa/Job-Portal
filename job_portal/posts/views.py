@@ -5,8 +5,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.shortcuts import get_object_or_404
 from django.db import transaction, models
-from .models import Post, PostImage, PostLike
-from .serializers import PostSerializer, PostCreateSerializer, ImageAddSerializer
+from .models import Post, PostImage, PostLike, PostComment
+from .serializers import PostSerializer, PostCreateSerializer, ImageAddSerializer, PostCommentSerializer
 from .permissions import IsAuthorOrReadOnly
 
 
@@ -16,6 +16,12 @@ class PostListCreateView(generics.ListCreateAPIView):
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['description', 'author__first_name', 'author__last_name']
     ordering = ['-created_at']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.request.query_params.get('my_posts') == 'true':
+            queryset = queryset.filter(author=self.request.user)
+        return queryset
     
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -76,15 +82,15 @@ class PostImageAddView(APIView):
         if post.author != request.user and not request.user.is_staff:
             return Response({'detail': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
         
-        if post.images.count() >= 10:
-            return Response({'detail': 'Maximum 10 images allowed per post.'}, status=status.HTTP_400_BAD_REQUEST)
+        if post.images.count() >= 20:
+            return Response({'detail': 'Maximum 20 images allowed per post.'}, status=status.HTTP_400_BAD_REQUEST)
         
         serializer = ImageAddSerializer(data=request.data)
         if serializer.is_valid():
             images_data = serializer.validated_data['images']
             
-            if post.images.count() + len(images_data) > 10:
-                return Response({'detail': 'Maximum 10 images allowed per post.'}, status=status.HTTP_400_BAD_REQUEST)
+            if post.images.count() + len(images_data) > 20:
+                return Response({'detail': 'Maximum 20 images allowed per post.'}, status=status.HTTP_400_BAD_REQUEST)
             
             last_order = post.images.aggregate(max_order=models.Max('order'))['max_order'] or 0
             
@@ -167,5 +173,51 @@ class PostUnlikeView(APIView):
                 'likes_count': post.likes_count,
                 'liked': False
             }, status=status.HTTP_404_NOT_FOUND)
+
+
+class PostCommentListCreateView(generics.ListCreateAPIView):
+    serializer_class = PostCommentSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        post_id = self.kwargs['post_id']
+        return PostComment.objects.filter(post_id=post_id, is_active=True).select_related('user')
+    
+    def perform_create(self, serializer):
+        post_id = self.kwargs['post_id']
+        post = get_object_or_404(Post, id=post_id, is_active=True)
+        comment = serializer.save(user=self.request.user, post=post)
+        
+        # Update comment count
+        post.comments_count = models.F('comments_count') + 1
+        post.save(update_fields=['comments_count'])
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'total_count': queryset.count(),
+            'results': serializer.data
+        })
+
+
+class CommentDeleteView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def delete(self, request, comment_id):
+        comment = get_object_or_404(PostComment, id=comment_id, is_active=True)
+        
+        if comment.user != request.user and not request.user.is_staff:
+            return Response({'detail': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
+        
+        comment.is_active = False
+        comment.save()
+        
+        # Update comment count
+        post = comment.post
+        post.comments_count = models.F('comments_count') - 1
+        post.save(update_fields=['comments_count'])
+        
+        return Response({'detail': 'Comment deleted successfully'}, status=status.HTTP_200_OK)
 
 

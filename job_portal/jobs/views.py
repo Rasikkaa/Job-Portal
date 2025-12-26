@@ -14,96 +14,38 @@ from home.models import UserProfile
 from .permissions import IsPublisherRole, IsPublisherOrOwner, IsEmployee, IsJobPublisher, IsApplicantOrPublisher
 
 
-class JobListCreateView(generics.ListCreateAPIView):
-    permission_classes = [IsPublisherRole]
+class JobListView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
     filter_backends = [SearchFilter, OrderingFilter]
-    search_fields = ['title', 'description', 'requirments', 'publisher__first_name', 'publisher__last_name']
-    ordering_fields = ['created_at', 'title', 'job_type', 'count']
+    search_fields = ['title', 'description', 'requirments', 'experience', 'work_mode', 'publisher__first_name', 'publisher__last_name']
+    ordering_fields = ['created_at', 'title', 'job_type', 'experience', 'work_mode', 'count']
     ordering = ['-created_at']
-
-    def get_serializer_class(self):
-        if self.request.method == 'GET':
-            return JobListSerializer
-        return JobDetailSerializer
+    serializer_class = JobDetailSerializer
 
     def get_queryset(self):
-        queryset = Job.objects.filter(is_active=True).select_related('publisher')
-        
-        # Search functionality
-        search = self.request.GET.get('search')
-        if search:
-            queryset = queryset.filter(
-                Q(title__icontains=search) | 
-                Q(description__icontains=search) | 
-                Q(requirments__icontains=search)
-            )
-        
-        # Custom filters
-        title = self.request.GET.get('title')
-        if title:
-            queryset = queryset.filter(title__icontains=title)
-        
-        company = self.request.GET.get('company')
-        if company:
-            queryset = queryset.filter(
-                Q(publisher__first_name__icontains=company) |
-                Q(publisher__last_name__icontains=company) |
-                Q(publisher__email__icontains=company)
-            )
-        
-        location = self.request.GET.get('location')
-        if location:
-            queryset = queryset.filter(location__icontains=location)
-        
-        job_type = self.request.GET.get('job_type')
-        if job_type:
-            types = [t.strip() for t in job_type.split(',')]
-            queryset = queryset.filter(job_type__in=types)
-        
-        posted_after = self.request.GET.get('posted_after')
-        if posted_after:
-            try:
-                date = datetime.strptime(posted_after, '%Y-%m-%d').date()
-                queryset = queryset.filter(created_at__date__gte=date)
-            except ValueError:
-                pass
-        
-        posted_before = self.request.GET.get('posted_before')
-        if posted_before:
-            try:
-                date = datetime.strptime(posted_before, '%Y-%m-%d').date()
-                queryset = queryset.filter(created_at__date__lte=date)
-            except ValueError:
-                pass
-        
-        return queryset
+        return Job.objects.filter(is_active=True).select_related('publisher')
 
-    def list(self, request, *args, **kwargs):
-        # Validate job_type
-        job_type = request.GET.get('job_type')
-        if job_type:
-            valid_types = ['fulltime', 'parttime', 'intern']
-            types = [t.strip() for t in job_type.split(',')]
-            if not all(t in valid_types for t in types):
-                return Response({'error': 'Invalid job_type. Use: fulltime, parttime, intern'}, status=400)
-        
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        
-        return Response({
-            'total_count': queryset.count(),
-            'results': serializer.data
-        })
+class JobCreateView(generics.CreateAPIView):
+    serializer_class = JobDetailSerializer
+    permission_classes = [IsPublisherRole]
 
     def perform_create(self, serializer):
         serializer.save(publisher=self.request.user)
+
+class JobStatsView(APIView):
+    permission_classes = [IsAuthenticated, IsPublisherRole]
     
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        if serializer.is_valid():
-            self.perform_create(serializer)
-            return Response({'detail': 'Job created successfully.'}, status=status.HTTP_201_CREATED)
-        return Response({'detail': 'Invalid data provided.'}, status=status.HTTP_400_BAD_REQUEST)
+    def get(self, request):
+        user_jobs = Job.objects.filter(publisher=request.user)
+        total_jobs = user_jobs.count()
+        active_jobs = user_jobs.filter(is_active=True).count()
+        total_applications = Application.objects.filter(job__publisher=request.user).count()
+        
+        return Response({
+            'total_jobs': total_jobs,
+            'active_jobs': active_jobs,
+            'total_applications': total_applications
+        })
 
 class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Job.objects.all().select_related('publisher')
@@ -127,11 +69,11 @@ class JobDetailView(generics.RetrieveUpdateDestroyAPIView):
         return Response({'detail': 'Job deleted successfully.'}, status=status.HTTP_200_OK)
 
 class MyJobsView(generics.ListAPIView):
-    serializer_class = JobListSerializer
+    serializer_class = JobDetailSerializer
     permission_classes = [IsAuthenticated, IsPublisherRole]
     
     def get_queryset(self):
-        return Job.objects.filter(publisher=self.request.user, is_active=True).order_by('-created_at')
+        return Job.objects.filter(publisher=self.request.user).select_related('publisher').order_by('-created_at')
 
 class ApplyJobView(APIView):
     permission_classes = [IsAuthenticated, IsEmployee]
@@ -141,6 +83,9 @@ class ApplyJobView(APIView):
             job = Job.objects.get(id=job_id, is_active=True)
         except Job.DoesNotExist:
             return Response({'detail': 'Job not found'}, status=status.HTTP_404_NOT_FOUND)
+        
+        if job.publisher == request.user:
+            return Response({'detail': 'Cannot apply to your own job posting'}, status=status.HTTP_400_BAD_REQUEST)
         
         if Application.objects.filter(job=job, applicant=request.user).exists():
             return Response({'detail': 'Already applied to this job'}, status=status.HTTP_400_BAD_REQUEST)

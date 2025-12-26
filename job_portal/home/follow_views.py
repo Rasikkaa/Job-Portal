@@ -6,7 +6,7 @@ from django.shortcuts import get_object_or_404
 
 from authentication.models import User
 from .follow_models import Follow
-from .follow_serializers import UserMinimalSerializer
+from .follow_serializers import UserMinimalSerializer, UserNetworkSerializer
 
 class FollowUserView(APIView):
     permission_classes = [IsAuthenticated]
@@ -26,12 +26,16 @@ class FollowUserView(APIView):
             return Response({'detail': 'Employees cannot follow other employees.'}, status=403)
         
         # Check existing follow
-        if Follow.objects.filter(follower=follower, following=following).exists():
-            return Response({'detail': 'Already following this user.'}, status=409)
+        existing_follow = Follow.objects.filter(follower=follower, following=following).first()
+        if existing_follow:
+            if existing_follow.status == 'pending':
+                return Response({'detail': 'Follow request already sent.'}, status=409)
+            elif existing_follow.status == 'accepted':
+                return Response({'detail': 'Already following this user.'}, status=409)
         
-        # Create follow
-        Follow.objects.create(follower=follower, following=following)
-        return Response({'detail': 'Following created'}, status=201)
+        # Create follow request
+        Follow.objects.create(follower=follower, following=following, status='pending')
+        return Response({'detail': 'Follow request sent'}, status=201)
 
 class UnfollowUserView(APIView):
     permission_classes = [IsAuthenticated]
@@ -48,12 +52,12 @@ class UnfollowUserView(APIView):
         return Response({'detail': 'Unfollowed'}, status=200)
 
 class FollowersListView(generics.ListAPIView):
-    serializer_class = UserMinimalSerializer
+    serializer_class = UserNetworkSerializer
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         user_id = self.kwargs['user_id']
-        follows = Follow.objects.filter(following_id=user_id)
+        follows = Follow.objects.filter(following_id=user_id, status='accepted')
         return User.objects.filter(id__in=follows.values_list('follower_id', flat=True))
     
     def list(self, request, *args, **kwargs):
@@ -65,12 +69,12 @@ class FollowersListView(generics.ListAPIView):
         })
 
 class FollowingListView(generics.ListAPIView):
-    serializer_class = UserMinimalSerializer
+    serializer_class = UserNetworkSerializer
     permission_classes = [IsAuthenticated]
     
     def get_queryset(self):
         user_id = self.kwargs['user_id']
-        follows = Follow.objects.filter(follower_id=user_id)
+        follows = Follow.objects.filter(follower_id=user_id, status='accepted')
         return User.objects.filter(id__in=follows.values_list('following_id', flat=True))
     
     def list(self, request, *args, **kwargs):
@@ -85,8 +89,8 @@ class FollowCountsView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request, user_id):
-        followers_count = Follow.objects.filter(following_id=user_id).count()
-        following_count = Follow.objects.filter(follower_id=user_id).count()
+        followers_count = Follow.objects.filter(following_id=user_id, status='accepted').count()
+        following_count = Follow.objects.filter(follower_id=user_id, status='accepted').count()
         
         data = {
             'followers': followers_count,
@@ -94,3 +98,49 @@ class FollowCountsView(APIView):
         }
         
         return Response(data)
+
+class FollowRequestsView(generics.ListAPIView):
+    serializer_class = UserNetworkSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        # Get pending follow requests for current user
+        follows = Follow.objects.filter(following=self.request.user, status='pending')
+        return User.objects.filter(id__in=follows.values_list('follower_id', flat=True))
+    
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({
+            'total_count': queryset.count(),
+            'results': serializer.data
+        })
+
+class AcceptFollowRequestView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, user_id):
+        follower = get_object_or_404(User, id=user_id)
+        following = request.user
+        
+        follow = Follow.objects.filter(follower=follower, following=following, status='pending').first()
+        if not follow:
+            return Response({'detail': 'No pending follow request found.'}, status=404)
+        
+        follow.status = 'accepted'
+        follow.save()
+        return Response({'detail': 'Follow request accepted'}, status=200)
+
+class RejectFollowRequestView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, user_id):
+        follower = get_object_or_404(User, id=user_id)
+        following = request.user
+        
+        follow = Follow.objects.filter(follower=follower, following=following, status='pending').first()
+        if not follow:
+            return Response({'detail': 'No pending follow request found.'}, status=404)
+        
+        follow.delete()  # Remove rejected requests
+        return Response({'detail': 'Follow request rejected'}, status=200)

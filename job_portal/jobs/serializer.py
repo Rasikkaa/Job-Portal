@@ -13,24 +13,46 @@ class UserPublicSerializer(serializers.ModelSerializer):
 class JobListSerializer(serializers.ModelSerializer):
     publisher_name = serializers.SerializerMethodField()
     publisher_job_role = serializers.SerializerMethodField()
+    company_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Job
-        fields = ('id', 'title', 'publisher_name', 'publisher_job_role', 'job_type', 'created_at','count')
+        fields = ('id', 'title', 'publisher_name', 'publisher_job_role', 'company_name', 'job_type', 'experience', 'work_mode', 'created_at','count')
 
     def get_publisher_name(self, obj):
         return f"{obj.publisher.first_name} {obj.publisher.last_name}".strip() or obj.publisher.email
 
     def get_publisher_job_role(self, obj):
         return obj.publisher.job_role
+    
+    def get_company_name(self, obj):
+        if obj.publisher.job_role == 'employer':
+            try:
+                return obj.publisher.userprofile.company_name
+            except:
+                return None
+        elif obj.publisher.job_role == 'company':
+            return f"{obj.publisher.first_name} {obj.publisher.last_name}".strip()
+        return None
 
 class JobDetailSerializer(serializers.ModelSerializer):
     publisher = UserPublicSerializer(read_only=True)
+    company_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Job
-        fields = ('id', 'title', 'description', 'requirments', 'location', 'salary', 'job_type', 'publisher', 'created_at', 'updated_at', 'is_active')
-        read_only_fields = ('publisher', 'created_at', 'updated_at')
+        fields = ('id', 'title', 'description', 'requirments', 'location', 'salary', 'job_type', 'experience', 'work_mode', 'publisher', 'company_name', 'created_at', 'updated_at', 'is_active', 'count')
+        read_only_fields = ('publisher', 'created_at', 'updated_at', 'count')
+    
+    def get_company_name(self, obj):
+        if obj.publisher.job_role == 'employer':
+            try:
+                return obj.publisher.userprofile.company_name
+            except:
+                return None
+        elif obj.publisher.job_role == 'company':
+            return f"{obj.publisher.first_name} {obj.publisher.last_name}".strip()
+        return None
 
 class UserJobSerializer(serializers.ModelSerializer):
     class Meta:
@@ -44,14 +66,49 @@ class ApplicationCreateSerializer(serializers.ModelSerializer):
 
 class ApplicantSerializer(serializers.ModelSerializer):
     profile_image = serializers.SerializerMethodField()
+    phone = serializers.SerializerMethodField()
+    location = serializers.SerializerMethodField()
+    bio = serializers.SerializerMethodField()
+    skills = serializers.SerializerMethodField()
+    experience_years = serializers.SerializerMethodField()
     
     class Meta:
         model = User
-        fields = ('id', 'first_name', 'last_name', 'profile_image')
+        fields = ('id', 'first_name', 'last_name', 'email', 'job_role', 'profile_image', 'phone', 'location', 'bio', 'skills', 'experience_years')
     
     def get_profile_image(self, obj):
         try:
             return obj.userprofile.profile_image.url if obj.userprofile.profile_image else None
+        except:
+            return None
+    
+    def get_phone(self, obj):
+        try:
+            return obj.userprofile.phone
+        except:
+            return None
+    
+    def get_location(self, obj):
+        try:
+            return obj.userprofile.location
+        except:
+            return None
+    
+    def get_bio(self, obj):
+        try:
+            return obj.userprofile.bio
+        except:
+            return None
+    
+    def get_skills(self, obj):
+        try:
+            return obj.userprofile.skills
+        except:
+            return []
+    
+    def get_experience_years(self, obj):
+        try:
+            return obj.userprofile.experience_years
         except:
             return None
 

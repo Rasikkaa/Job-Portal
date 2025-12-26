@@ -1,0 +1,220 @@
+.profile-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.profile-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+}
+
+.profile-header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.edit-btn {
+  background: #0073b1;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.edit-btn:hover {
+  background: #005885;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #333;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #0073b1;
+}
+
+.skills-input {
+  display: flex;
+  gap: 10px;
+}
+
+.skills-input input {
+  flex: 1;
+}
+
+.skills-input button {
+  background: #0073b1;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.skill-tag {
+  background: #e1f5fe;
+  color: #0073b1;
+  padding: 4px 8px;
+  border-radius: 16px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.skill-tag button {
+  background: none;
+  border: none;
+  color: #0073b1;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.save-btn {
+  background: #0073b1;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  align-self: flex-start;
+}
+
+.save-btn:hover {
+  background: #005885;
+}
+
+.save-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.profile-display {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+}
+
+.profile-avatar-large {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.profile-avatar-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #0073b1;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+  font-weight: bold;
+}
+
+.profile-details {
+  flex: 1;
+}
+
+.profile-details h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 24px;
+}
+
+.profile-details .email {
+  color: #666;
+  margin: 5px 0;
+}
+
+.profile-details .job-role {
+  color: #0073b1;
+  font-weight: 600;
+  margin: 5px 0 20px 0;
+  text-transform: capitalize;
+}
+
+.profile-details p {
+  margin: 10px 0;
+  color: #333;
+  line-height: 1.5;
+}
+
+.skills-display {
+  margin-top: 15px;
+}
+
+.skills-display .skills-list .skill-tag {
+  background: #f0f0f0;
+  color: #333;
+}
+
+@media (max-width: 768px) {
+  .profile-display {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .profile-container {
+    margin: 10px;
+    padding: 15px;
+  }
+}

@@ -27,7 +27,7 @@ class IsPublisherOrOwner(permissions.BasePermission):
 
 class IsEmployee(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.job_role == 'employee'
+        return request.user.is_authenticated and request.user.job_role in ['employee', 'employer']
 
 class IsJobPublisher(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
