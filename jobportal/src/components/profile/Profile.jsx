@@ -42,6 +42,22 @@ export default function Profile({ user, onProfileUpdate }) {
     setFormData(prev => ({ ...prev, [fieldName]: e.target.files[0] }));
   };
 
+  const handleDeleteImage = async () => {
+    if (window.confirm('Are you sure you want to delete your profile image?')) {
+      setLoading(true);
+      try {
+        await authAPI.deleteProfileImage();
+        alert('Profile image deleted successfully!');
+        if (onProfileUpdate) onProfileUpdate();
+      } catch (error) {
+        console.error('Delete image error:', error);
+        alert('Failed to delete profile image');
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   const addSkill = () => {
     if (skillInput.trim() && !formData.skills.includes(skillInput.trim())) {
       setFormData(prev => ({
@@ -101,85 +117,108 @@ export default function Profile({ user, onProfileUpdate }) {
     }
   };
 
-  const renderCompanyForm = () => (
-    <form onSubmit={handleSubmit} className="profile-form">
-      <div className="form-group">
-        <label>Company Logo</label>
-        <input type="file" accept="image/*" onChange={handleImageChange} />
-      </div>
-      <div className="form-group">
-        <label>Company Name *</label>
-        <input type="text" name="company_name" value={formData.company_name} onChange={handleInputChange} required />
-      </div>
-      <div className="form-group">
-        <label>Company Phone *</label>
-        <input type="tel" name="company_phone" value={formData.company_phone} onChange={handleInputChange} required />
-      </div>
-      <div className="form-group">
-        <label>Website</label>
-        <input type="url" name="company_website" value={formData.company_website} onChange={handleInputChange} />
-      </div>
-      <div className="form-group">
-        <label>Address *</label>
-        <input type="text" name="company_address" value={formData.company_address} onChange={handleInputChange} required />
-      </div>
-      <div className="form-group">
-        <label>Description</label>
-        <textarea name="company_description" value={formData.company_description} onChange={handleInputChange} rows="4" />
-      </div>
-      <button type="submit" disabled={loading} className="save-btn">
-        {loading ? 'Saving...' : 'Save Profile'}
-      </button>
-    </form>
-  );
-
-  const renderUserForm = () => (
-    <form onSubmit={handleSubmit} className="profile-form">
-      <div className="form-group">
-        <label>Profile Image</label>
-        <input type="file" accept="image/*" onChange={handleImageChange} />
-      </div>
-      <div className="form-group">
-        <label>Phone</label>
-        <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} />
-      </div>
-      <div className="form-group">
-        <label>Location</label>
-        <input type="text" name="location" value={formData.location} onChange={handleInputChange} />
-      </div>
-      <div className="form-group">
-        <label>Bio</label>
-        <textarea name="bio" value={formData.bio} onChange={handleInputChange} rows="4" />
-      </div>
-      <div className="form-group">
-        <label>Experience (Years)</label>
-        <input type="number" name="experience_years" value={formData.experience_years} onChange={handleInputChange} min="0" max="50" />
-      </div>
-      {user?.job_role === 'employer' && (
+  const renderCompanyForm = () => {
+    return (
+      <form onSubmit={handleSubmit} className="profile-form">
         <div className="form-group">
-          <label>Company Name</label>
-          <input type="text" name="company_name" value={formData.company_name} onChange={handleInputChange} />
+          <label>Company Logo</label>
+          <div className="image-upload-section">
+            <input type="file" accept="image/*" onChange={handleImageChange} />
+            {user?.company_logo && (
+              <button type="button" onClick={handleDeleteImage} className="delete-image-btn" disabled={loading}>
+                Delete Current Logo
+              </button>
+            )}
+          </div>
         </div>
-      )}
-      <div className="form-group">
-        <label>Skills</label>
-        <div className="skills-input">
-          <input type="text" value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())} />
-          <button type="button" onClick={addSkill}>Add</button>
+        <div className="form-group">
+          <label>Company Name *</label>
+          <input type="text" name="company_name" value={formData.company_name} onChange={handleInputChange} required />
         </div>
-        <div className="skills-list">
-          {formData.skills.map((skill, index) => (
-            <span key={index} className="skill-tag">
-              {skill}<button type="button" onClick={() => removeSkill(skill)}>×</button>
-            </span>
-          ))}
+        <div className="form-group">
+          <label>Company Phone *</label>
+          <input type="tel" name="company_phone" value={formData.company_phone} onChange={handleInputChange} required />
         </div>
-      </div>
-      <button type="submit" disabled={loading} className="save-btn">
-        {loading ? 'Saving...' : 'Save Profile'}
-      </button>
-    </form>
-  );
+        <div className="form-group">
+          <label>Website</label>
+          <input type="url" name="company_website" value={formData.company_website} onChange={handleInputChange} />
+        </div>
+        <div className="form-group">
+          <label>Address *</label>
+          <input type="text" name="company_address" value={formData.company_address} onChange={handleInputChange} required />
+        </div>
+        <div className="form-group">
+          <label>Description</label>
+          <textarea name="company_description" value={formData.company_description} onChange={handleInputChange} rows="4" />
+        </div>
+        <button type="submit" disabled={loading} className="save-btn">
+          {loading ? 'Saving...' : 'Save Profile'}
+        </button>
+      </form>
+    );
+  };
+
+  const renderUserForm = () => {
+    return (
+      <form onSubmit={handleSubmit} className="profile-form">
+        <div className="form-group">
+          <label>Profile Image</label>
+          <div className="image-upload-section">
+            <input type="file" accept="image/*" onChange={handleImageChange} />
+            {user?.profile_image && (
+              <button 
+                type="button" 
+                onClick={handleDeleteImage} 
+                className="delete-image-link"
+                disabled={loading}
+              >
+                ✕ Remove Image
+              </button>
+            )}
+          </div>
+        </div>
+        <div className="form-group">
+          <label>Phone</label>
+          <input type="tel" name="phone" value={formData.phone} onChange={handleInputChange} />
+        </div>
+        <div className="form-group">
+          <label>Location</label>
+          <input type="text" name="location" value={formData.location} onChange={handleInputChange} />
+        </div>
+        <div className="form-group">
+          <label>Bio</label>
+          <textarea name="bio" value={formData.bio} onChange={handleInputChange} rows="4" />
+        </div>
+        <div className="form-group">
+          <label>Experience (Years)</label>
+          <input type="number" name="experience_years" value={formData.experience_years} onChange={handleInputChange} min="0" max="50" />
+        </div>
+        {user?.job_role === 'employer' && (
+          <div className="form-group">
+            <label>Company Name</label>
+            <input type="text" name="company_name" value={formData.company_name} onChange={handleInputChange} />
+          </div>
+        )}
+        <div className="form-group">
+          <label>Skills</label>
+          <div className="skills-input">
+            <input type="text" value={skillInput} onChange={(e) => setSkillInput(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())} />
+            <button type="button" onClick={addSkill}>Add</button>
+          </div>
+          <div className="skills-list">
+            {formData.skills.map((skill, index) => (
+              <span key={index} className="skill-tag">
+                {skill}<button type="button" onClick={() => removeSkill(skill)}>×</button>
+              </span>
+            ))}
+          </div>
+        </div>
+        <button type="submit" disabled={loading} className="save-btn">
+          {loading ? 'Saving...' : 'Save Profile'}
+        </button>
+      </form>
+    );
+  };
 
   const renderCompanyDisplay = () => (
     <div className="profile-display">

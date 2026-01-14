@@ -5,8 +5,10 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django.shortcuts import get_object_or_404
 from django.db import transaction, models
-from .models import Post, PostImage, PostLike, PostComment
-from .serializers import PostSerializer, PostCreateSerializer, ImageAddSerializer, PostCommentSerializer
+from authentication.models import User
+from notifications.models import Notification
+from .models import Post, PostImage, PostLike, PostComment, PostShare
+from .serializers import PostSerializer, PostCreateSerializer, ImageAddSerializer, PostCommentSerializer, UserListSerializer
 from .permissions import IsAuthorOrReadOnly
 
 
@@ -207,7 +209,8 @@ class CommentDeleteView(APIView):
     def delete(self, request, comment_id):
         comment = get_object_or_404(PostComment, id=comment_id, is_active=True)
         
-        if comment.user != request.user and not request.user.is_staff:
+        # Allow comment author, post author, or staff to delete comments
+        if comment.user != request.user and comment.post.author != request.user and not request.user.is_staff:
             return Response({'detail': 'Permission denied.'}, status=status.HTTP_403_FORBIDDEN)
         
         comment.is_active = False
@@ -219,5 +222,75 @@ class CommentDeleteView(APIView):
         post.save(update_fields=['comments_count'])
         
         return Response({'detail': 'Comment deleted successfully'}, status=status.HTTP_200_OK)
+
+
+class UserListView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        # Get users that are following the current user (followers)
+        from home.models import Follow
+        follower_ids = Follow.objects.filter(
+            following=request.user, 
+            status='accepted'
+        ).values_list('follower_id', flat=True)
+        
+        users = User.objects.filter(id__in=follower_ids, is_active=True)
+        serializer = UserListSerializer(users, many=True)
+        return Response(serializer.data)
+
+
+class PostShareView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, post_id):
+        post = get_object_or_404(Post, id=post_id, is_active=True)
+        recipient_ids = request.data.get('recipients', [])
+        
+        if not recipient_ids:
+            return Response({'detail': 'No recipients selected'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        shared_count = 0
+        for recipient_id in recipient_ids:
+            try:
+                recipient = User.objects.get(id=recipient_id)
+                share, created = PostShare.objects.get_or_create(
+                    post=post, sender=request.user, recipient=recipient
+                )
+                if created:
+                    # Create notification
+                    Notification.objects.create(
+                        recipient=recipient,
+                        sender=request.user,
+                        notification_type='post',
+                        message=f'{request.user.first_name} {request.user.last_name} shared a post with you',
+                        object_id=post.id
+                    )
+                    shared_count += 1
+            except User.DoesNotExist:
+                continue
+        
+        return Response({
+            'detail': f'Post shared with {shared_count} users',
+            'shared_count': shared_count
+        }, status=status.HTTP_200_OK)
+
+
+class NotificationListView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        notifications = Notification.objects.filter(recipient=request.user)
+        # Simple serialization since we're not using the NotificationSerializer
+        data = [{
+            'id': str(n.id),
+            'sender_name': f'{n.sender.first_name} {n.sender.last_name}' if n.sender else 'System',
+            'message': n.message,
+            'notification_type': n.notification_type,
+            'is_read': n.is_read,
+            'created_at': n.created_at,
+            'object_id': str(n.object_id) if n.object_id else None
+        } for n in notifications]
+        return Response(data)
 
 

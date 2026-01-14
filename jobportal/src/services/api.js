@@ -272,6 +272,38 @@ export const postsAPI = {
       },
     }, API_BASE_URL);
   },
+
+  getUsers: () => {
+    const token = localStorage.getItem('access_token');
+    return apiCall('/users/', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    }, API_BASE_URL);
+  },
+
+  sharePost: (postId, recipients) => {
+    const token = localStorage.getItem('access_token');
+    return apiCall(`/posts/${postId}/share/`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ recipients }),
+    }, API_BASE_URL);
+  },
+
+  getNotifications: () => {
+    const token = localStorage.getItem('access_token');
+    return apiCall('/notifications/', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    }, API_BASE_URL);
+  },
 };
 
 export const authAPI = {
@@ -345,5 +377,15 @@ export const authAPI = {
         confirm_password: newPassword 
       }),
     });
+  },
+
+  deleteProfileImage: () => {
+    const token = localStorage.getItem('access_token');
+    return apiCall('/profile/delete-image/', {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    }, 'http://localhost:8000/api/home');
   },
 };

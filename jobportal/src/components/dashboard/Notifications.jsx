@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { notificationService } from '../../services/notificationService';
 import './Notifications.css';
 
-export default function Notifications() {
+export default function Notifications({ onNavigateToPost }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
@@ -56,6 +56,25 @@ export default function Notifications() {
       setUnreadCount(0);
     } catch (error) {
       console.error('Error marking all as read:', error);
+    }
+  };
+
+  const handleNotificationClick = async (notification) => {
+    console.log('Notification clicked:', notification);
+    console.log('Notification type:', notification.notification_type);
+    console.log('Object ID:', notification.object_id);
+    console.log('onNavigateToPost function:', onNavigateToPost);
+    
+    if (!notification.is_read) {
+      await markAsRead(notification.id);
+    }
+    
+    // Navigate to post for both read and unread notifications
+    if (notification.notification_type === 'post' && notification.object_id && onNavigateToPost) {
+      console.log('Calling onNavigateToPost with:', notification.object_id);
+      onNavigateToPost(notification.object_id);
+    } else {
+      console.log('Navigation conditions not met');
     }
   };
 
@@ -150,7 +169,7 @@ export default function Notifications() {
             <div 
               key={notification.id}
               className={`notification-card ${!notification.is_read ? 'unread' : ''}`}
-              onClick={() => !notification.is_read && markAsRead(notification.id)}
+              onClick={() => handleNotificationClick(notification)}
             >
               <div className="notification-icon">
                 {getNotificationIcon(notification.notification_type)}

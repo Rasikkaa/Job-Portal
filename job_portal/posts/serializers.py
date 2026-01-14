@@ -12,7 +12,12 @@ class AuthorSerializer(serializers.ModelSerializer):
     
     def get_avatar_url(self, obj):
         try:
-            return obj.userprofile.profile_image.url if obj.userprofile.profile_image else None
+            if obj.job_role == 'company':
+                # For company users, get company logo
+                return obj.companyprofile.company_logo.url if obj.companyprofile.company_logo else None
+            else:
+                # For individual users, get profile image
+                return obj.userprofile.profile_image.url if obj.userprofile.profile_image else None
         except:
             return None
 
@@ -129,5 +134,16 @@ class PostCommentSerializer(serializers.ModelSerializer):
     def get_is_owner(self, obj):
         request = self.context.get('request')
         return request and request.user == obj.user
+
+
+class UserListSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = User
+        fields = ['id', 'full_name', 'job_role']
+    
+    def get_full_name(self, obj):
+        return f"{obj.first_name} {obj.last_name}".strip()
 
 

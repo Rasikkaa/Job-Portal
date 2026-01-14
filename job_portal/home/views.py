@@ -5,6 +5,7 @@ from rest_framework.views import APIView
 from .models import UserProfile, CompanyProfile
 from .serializer import UserProfileSerializer, CompanyProfileSerializer
 from .permissions import IsCompany, IsEmployeeOrEmployer
+import os
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
@@ -32,6 +33,30 @@ class ProfileView(APIView):
             serializer.save()
             return Response({'detail': 'Profile updated successfully.'}, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class DeleteProfileImageView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def delete(self, request):
+        user = request.user
+        if user.job_role == 'company':
+            profile, created = CompanyProfile.objects.get_or_create(user=user)
+            if profile.company_logo:
+                if os.path.isfile(profile.company_logo.path):
+                    os.remove(profile.company_logo.path)
+                profile.company_logo = None
+                profile.save()
+                return Response({'detail': 'Company logo deleted successfully.'}, status=status.HTTP_200_OK)
+            return Response({'detail': 'No company logo to delete.'}, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            profile, created = UserProfile.objects.get_or_create(user=user)
+            if profile.profile_image:
+                if os.path.isfile(profile.profile_image.path):
+                    os.remove(profile.profile_image.path)
+                profile.profile_image = None
+                profile.save()
+                return Response({'detail': 'Profile image deleted successfully.'}, status=status.HTTP_200_OK)
+            return Response({'detail': 'No profile image to delete.'}, status=status.HTTP_400_BAD_REQUEST)
 
 class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer

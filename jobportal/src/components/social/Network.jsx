@@ -234,7 +234,7 @@ export default function Network({ user }) {
           className={`tab-btn ${activeTab === 'followers' ? 'active' : ''}`}
           onClick={() => setActiveTab('followers')}
         >
-          Followers
+          Followers ({networkStats.followers})
         </button>
       </div>
 

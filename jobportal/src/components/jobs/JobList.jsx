@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { jobsAPI } from "../../services/api";
 
-export default function JobList({ onJobSelect, selectedJobId, isPublisher, isEmployee, user }) {
+export default function JobList({ onJobSelect, selectedJobId, isPublisher, isEmployee, user, onViewMyJobs, onViewMyApplications, showNavButtons = false }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
   const [jobs, setJobs] = useState([]);
@@ -80,6 +80,20 @@ export default function JobList({ onJobSelect, selectedJobId, isPublisher, isEmp
           <h2>Available Jobs</h2>
           <p className="job-count">{filteredJobs.length} results</p>
         </div>
+        {showNavButtons && (
+          <div className="nav-right">
+            {(isPublisher || user?.job_role === 'employer') && (
+              <button className="manage-jobs-btn" onClick={onViewMyJobs}>
+                Manage My Jobs
+              </button>
+            )}
+            {(isEmployee || user?.job_role === 'employer') && (
+              <button className="manage-jobs-btn" onClick={onViewMyApplications}>
+                My Applications
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="job-list-filters">

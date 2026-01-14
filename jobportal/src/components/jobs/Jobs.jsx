@@ -118,6 +118,9 @@ const Jobs = forwardRef(({ user }, ref) => {
           isPublisher={isPublisher}
           isEmployee={isEmployee}
           user={user}
+          onViewMyJobs={handleViewMyJobs}
+          onViewMyApplications={handleViewMyApplications}
+          showNavButtons={true}
         />
       </div>
     );
@@ -152,6 +155,7 @@ const Jobs = forwardRef(({ user }, ref) => {
             onViewMyJobs={handleViewMyJobs}
             onViewMyApplications={handleViewMyApplications}
             user={user}
+            showNavButtons={false}
           />
         </div>
         <div className="jobs-main">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { MdMoreVert, MdEdit, MdDelete, MdClose, MdArrowBack, MdArrowForward } from 'react-icons/md';
+import Icons from '../shared/Icons';
 import { postsAPI } from '../../services/api';
+import { HiHeart, HiChat, HiShare } from 'react-icons/hi';
 
 export default function Posts({ user }) {
   const [postText, setPostText] = useState("");
@@ -18,6 +19,10 @@ export default function Posts({ user }) {
   const [newComment, setNewComment] = useState({});
   const [showComments, setShowComments] = useState({});
   const [likedPosts, setLikedPosts] = useState(new Set());
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [sharePostId, setSharePostId] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
 
   useEffect(() => {
     const fetchMyPosts = async () => {
@@ -300,12 +305,57 @@ export default function Posts({ user }) {
     }
   };
 
+  const handleSharePost = async (postId) => {
+    console.log('Share button clicked for post:', postId);
+    try {
+      console.log('Fetching users...');
+      const usersData = await postsAPI.getUsers();
+      console.log('Users data:', usersData);
+      setUsers(usersData);
+      setSharePostId(postId);
+      setShowShareModal(true);
+      setSelectedUsers([]);
+    } catch (error) {
+      console.error('Failed to load users:', error);
+      alert('Failed to load users: ' + error.message);
+    }
+  };
+
+  const handleUserSelect = (userId) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleSubmitShare = async () => {
+    if (selectedUsers.length === 0) return;
+    
+    try {
+      await postsAPI.sharePost(sharePostId, selectedUsers);
+      setShowShareModal(false);
+      setSharePostId(null);
+      setSelectedUsers([]);
+      alert('Post shared successfully!');
+    } catch (error) {
+      console.error('Failed to share post:', error);
+      alert('Failed to share post');
+    }
+  };
+
   return (
     <div className="posts-page">
       <div className="create-post-section">
         <div className="create-post-card">
           <div className="create-post-header">
-            <div className="user-avatar">{user?.first_name?.[0] || 'U'}</div>
+            <div className="user-avatar">
+              {(user?.profile_image || user?.company_logo) ? (
+                <img src={user?.profile_image || user?.company_logo} alt="Profile" style={{width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover'}} />
+              ) : (
+                user?.job_role === 'company' ? (user?.company_name?.[0] || 'C') : (user?.first_name?.[0] || 'U')
+              )}
+            </div>
             <textarea 
               value={postText}
               onChange={(e) => setPostText(e.target.value)}
@@ -322,7 +372,7 @@ export default function Posts({ user }) {
                     className="remove-image" 
                     onClick={() => removeImage(image.id)}
                   >
-                    <MdClose />
+                    ×
                   </button>
                 </div>
               ))}
@@ -362,7 +412,13 @@ export default function Posts({ user }) {
           return (
             <div key={post.id} className="feed-post">
               <div className="post-header">
-                <div className="post-avatar">{authorInitial}</div>
+                <div className="post-avatar">
+                  {(user?.profile_image || user?.company_logo) ? (
+                          <img src={user?.profile_image || user?.company_logo} alt="Profile" style={{width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover'}} />
+                        ) : (
+                          user?.job_role === 'company' ? (user?.company_name?.[0] || 'C') : (user?.first_name?.[0] || 'U')
+                        )}
+                </div>
                 <div className="post-user-info">
                   <h4>{authorName}</h4>
                   <p>{post.author?.job_role || 'Job Portal User'}</p>
@@ -376,7 +432,7 @@ export default function Posts({ user }) {
                       handleMenuToggle(post.id);
                     }}
                   >
-                    <MdMoreVert />
+                    ⋮
                   </button>
                   {openMenuId === post.id && (
                     <div className="menu-dropdown">
@@ -384,14 +440,14 @@ export default function Posts({ user }) {
                         className="menu-item" 
                         onClick={() => handleEditPost(post)}
                       >
-                        <MdEdit /> Edit
+                        ✏ Edit
                       </button>
 
                       <button 
                         className="menu-item delete" 
                         onClick={() => handleDeletePost(post.id)}
                       >
-                        <MdDelete /> Delete
+                        ✖ Delete
                       </button>
                     </div>
                   )}
@@ -416,7 +472,7 @@ export default function Posts({ user }) {
                             deleteImageFromPost(post.id, post.images[0].id);
                           }}
                         >
-                          <MdClose />
+                          ×
                         </button>
                       </div>
                     ) : (
@@ -435,7 +491,7 @@ export default function Posts({ user }) {
                                 deleteImageFromPost(post.id, post.images[index].id);
                               }}
                             >
-                              <MdClose />
+                              ×
                             </button>
                             {index === 3 && imageUrls.length > 4 && (
                               <div className="more-images-overlay">
@@ -454,21 +510,40 @@ export default function Posts({ user }) {
                   className={`action-btn ${likedPosts.has(post.id) ? 'liked' : ''}`}
                   onClick={() => handleLikePost(post.id)}
                 >
-                  👍 {post.likes_count} Likes
+                  <HiHeart className={likedPosts.has(post.id) ? 'liked-icon' : ''} /> 
+                  <span>Like ({post.likes_count})</span>
                 </button>
                 <button 
                   className="action-btn"
                   onClick={() => toggleComments(post.id)}
                   style={{ backgroundColor: showComments[post.id] ? '#e3f2fd' : 'transparent' }}
                 >
-                  💬 {post.comments_count} Comments {showComments[post.id] ? '▲' : '▼'}
+                  <HiChat /> 
+                  <span>Comment ({post.comments_count})</span>
+                </button>
+                <button 
+                  className="action-btn"
+                  onClick={() => handleSharePost(post.id)}
+                >
+                  <HiShare /> 
+                  <span>Share</span>
                 </button>
               </div>
               
               {showComments[post.id] && (
                 <div className="comments-section">
                   <div className="add-comment">
-                    <div className="comment-avatar">{authorInitial}</div>
+                    <div className="comment-avatar">
+                      {post.author?.avatar_url ? (
+                        <img
+                          src={`http://localhost:8000${post.author.avatar_url}`}
+                          alt={authorName}
+                          style={{width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover'}}
+                        />
+                      ) : (
+                        <span>{post.author?.job_role === 'company' ? (post.author?.company_name?.[0] || 'C') : authorInitial}</span>
+                      )}
+                    </div>
                     <input
                       type="text"
                       placeholder="Write a comment..."
@@ -490,18 +565,29 @@ export default function Posts({ user }) {
                       
                       return (
                         <div key={comment.id} className="comment">
-                          <div className="comment-avatar">{commentInitial}</div>
+                          <div className="comment-avatar">
+                             {comment.author?.avatar_url ? (
+                                <img
+                                    src={`http://localhost:8000${comment.author.avatar_url}`}
+                                    alt={commentAuthor}
+                                    style={{width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover'}}
+                                />
+                              ) : (
+                                <span>{comment.author?.job_role === 'company' ? (comment.author?.company_name?.[0] || 'C') : commentInitial}</span>
+                            )}
+                          </div>
                           <div className="comment-content">
                             <div className="comment-author">{commentAuthor}</div>
-                            <div className="comment-text">{comment.text}</div>
+                            <div className="comment-text">{comment.content}</div>
                             <div className="comment-time">{formatTimeAgo(comment.created_at)}</div>
                           </div>
-                          {comment.author?.id === user?.id && (
+                          {(comment.author?.id === user?.id || post.author?.id === user?.id) && (
                             <button 
-                              className="delete-comment-btn"
+                              className="delete-comment-btn hover-delete"
                               onClick={() => handleDeleteComment(comment.id, post.id)}
+                              title="Delete comment"
                             >
-                              ×
+                              🗑️
                             </button>
                           )}
                         </div>
@@ -541,7 +627,7 @@ export default function Posts({ user }) {
                           className="remove-image" 
                           onClick={() => removeEditImage(image.id, true)}
                         >
-                          <MdClose />
+                          ×
                         </button>
                       </div>
                     ))}
@@ -561,7 +647,7 @@ export default function Posts({ user }) {
                           className="remove-image" 
                           onClick={() => removeEditImage(image.id, false)}
                         >
-                          <MdClose />
+                          ×
                         </button>
                       </div>
                     ))}
@@ -600,15 +686,15 @@ export default function Posts({ user }) {
         <div className="lightbox-overlay" onClick={closeLightbox}>
           <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
             <button className="lightbox-close" onClick={closeLightbox}>
-              <MdClose />
+              ×
             </button>
             {lightbox.images.length > 1 && (
               <>
                 <button className="lightbox-nav prev" onClick={prevImage}>
-                  <MdArrowBack />
+                  ←
                 </button>
                 <button className="lightbox-nav next" onClick={nextImage}>
-                  <MdArrowForward />
+                  →
                 </button>
               </>
             )}
@@ -622,6 +708,43 @@ export default function Posts({ user }) {
                 {lightbox.currentIndex + 1} / {lightbox.images.length}
               </div>
             )}
+          </div>
+        </div>
+      )}
+      
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="share-modal-overlay">
+          <div className="share-modal">
+            <div className="share-modal-header">
+              <h3>Share Post</h3>
+              <button className="close-btn" onClick={() => setShowShareModal(false)}>×</button>
+            </div>
+            <div className="share-modal-body">
+              <div className="users-list">
+                {users.map(user => (
+                  <div key={user.id} className="user-item">
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.includes(user.id)}
+                      onChange={() => handleUserSelect(user.id)}
+                    />
+                    <span className="user-name">{user.full_name}</span>
+                    <span className="user-role">({user.job_role})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="share-modal-footer">
+              <button className="cancel-btn" onClick={() => setShowShareModal(false)}>Cancel</button>
+              <button 
+                className="share-btn" 
+                onClick={handleSubmitShare}
+                disabled={selectedUsers.length === 0}
+              >
+                Share ({selectedUsers.length})
+              </button>
+            </div>
           </div>
         </div>
       )}

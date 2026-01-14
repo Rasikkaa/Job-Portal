@@ -29,8 +29,6 @@ class PostImage(models.Model):
         ordering = ['order']
         unique_together = ['post', 'order']
 
-
-
     def __str__(self):
         return f"Image {self.order} for post {self.post.id}"
 
@@ -57,4 +55,14 @@ class PostComment(models.Model):
 
     def __str__(self):
         return f"Comment by {self.user.email} on post {self.post.id}"
+
+
+class PostShare(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='shares')
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='shared_posts')
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_shares')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['post', 'sender', 'recipient']
 

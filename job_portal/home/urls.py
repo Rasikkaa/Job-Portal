@@ -1,10 +1,11 @@
 from django.urls import path
-from .views import UserProfileView, CompanyProfileView, ProfileView
+from .views import UserProfileView, CompanyProfileView, ProfileView, DeleteProfileImageView
 from .follow_views import FollowUserView, UnfollowUserView, FollowersListView, FollowingListView, FollowCountsView, FollowRequestsView, AcceptFollowRequestView, RejectFollowRequestView
 from .user_list_views import AllUsersListView
 
 urlpatterns = [
     path('profile/', ProfileView.as_view(), name='profile'),
+    path('profile/delete-image/', DeleteProfileImageView.as_view(), name='delete_profile_image'),
     path('user-profile/', UserProfileView.as_view(), name='user_profile'),
     path('company-profile/', CompanyProfileView.as_view(), name='company_profile'),
     path('users/', AllUsersListView.as_view(), name='all_users'),

@@ -9,7 +9,7 @@ import Posts from "../social/Posts";
 import Profile from "../profile/Profile";
 import { authAPI, postsAPI } from "../../services/api";
 import { networkService } from "../../services/networkService";
-import { MdMoreVert, MdEdit, MdDelete, MdClose, MdArrowBack, MdArrowForward } from 'react-icons/md';
+import { HiDotsVertical, HiPencil, HiTrash, HiX, HiChevronLeft, HiChevronRight, HiHeart, HiChat, HiShare } from 'react-icons/hi';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState("home");
@@ -35,6 +35,10 @@ export default function Home() {
   const [followingSet, setFollowingSet] = useState(new Set());
   const [pendingRequests, setPendingRequests] = useState(new Set());
   const [userStats, setUserStats] = useState({ followers: 0, following: 0 });
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [sharePostId, setSharePostId] = useState(null);
+  const [users, setUsers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -304,6 +308,73 @@ export default function Home() {
     }));
   };
 
+  const handleSharePost = async (postId) => {
+    try {
+      const usersData = await postsAPI.getUsers();
+      setUsers(usersData);
+      setSharePostId(postId);
+      setShowShareModal(true);
+      setSelectedUsers([]);
+    } catch (error) {
+      console.error('Failed to load users:', error);
+      alert('Failed to load users: ' + error.message);
+    }
+  };
+
+  const handleUserSelect = (userId) => {
+    setSelectedUsers(prev => 
+      prev.includes(userId) 
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleSubmitShare = async () => {
+    if (selectedUsers.length === 0) return;
+    
+    try {
+      await postsAPI.sharePost(sharePostId, selectedUsers);
+      setShowShareModal(false);
+      setSharePostId(null);
+      setSelectedUsers([]);
+      alert('Post shared successfully!');
+    } catch (error) {
+      console.error('Failed to share post:', error);
+      alert('Failed to share post');
+    }
+  };
+
+  const handleNavigateToPost = (postId) => {
+    console.log('handleNavigateToPost called with postId:', postId);
+    // Convert UUID to integer if needed
+    const cleanPostId = postId.includes('-') ? parseInt(postId.split('-').pop(), 16) : postId;
+    console.log('Clean post ID:', cleanPostId);
+    setActiveTab('home');
+    setTimeout(() => {
+      console.log('Looking for post element with ID:', `post-${cleanPostId}`);
+      const postElement = document.getElementById(`post-${cleanPostId}`);
+      console.log('Post element found:', postElement);
+      if (postElement) {
+        postElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        postElement.style.border = '2px solid #0891b2';
+        setTimeout(() => {
+          postElement.style.border = '';
+        }, 3000);
+      } else {
+        console.log('Post element not found');
+        // Try with original postId
+        const altElement = document.getElementById(`post-${postId}`);
+        if (altElement) {
+          altElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          altElement.style.border = '2px solid #0891b2';
+          setTimeout(() => {
+            altElement.style.border = '';
+          }, 3000);
+        }
+      }
+    }, 100);
+  };
+
   useEffect(() => {
     const handleClickOutside = () => setOpenMenuId(null);
     document.addEventListener('click', handleClickOutside);
@@ -314,7 +385,8 @@ export default function Home() {
     return (
       <div className="home-screen">
         <div className="loading-container">
-          <p>Loading...</p>
+          <div className="loading-spinner"></div>
+          <p>Loading your dashboard...</p>
         </div>
       </div>
     );
@@ -375,7 +447,7 @@ export default function Home() {
                         <button className="post-option">📷 Image post</button>
                       </div>
                     </div> */}
-                    <div><h1 style={{color:"#000000ff"}}>Suggested posts</h1></div>
+                    <div><h1>Suggested Posts</h1></div>
                     
                     
 
@@ -385,9 +457,19 @@ export default function Home() {
                         const imageUrls = post.images?.map(img => `http://localhost:8000${img.url}`) || [];
                         
                         return (
-                          <div key={post.id} className="feed-post">
+                          <div key={post.id} id={`post-${post.id}`} className="feed-post">
                             <div className="post-header">
-                              <div className="post-avatar">{authorInitial}</div>
+                              <div className="post-avatar">
+                                {post.author?.avatar_url ? (
+                                  <img
+                                    src={`http://localhost:8000${post.author.avatar_url}`}
+                                    alt={authorName}
+                                    className="avatar-img"
+                                  />
+                                ) : (
+                                  <span>{post.author?.job_role === 'company' ? (post.author?.company_logo) : authorInitial}</span>
+                                )}
+                              </div>
 
                               <div className="post-user-info">
                                 <h4>{authorName}</h4>
@@ -404,7 +486,7 @@ export default function Home() {
                                       handleMenuToggle(post.id);
                                     }}
                                   >
-                                    <MdMoreVert />
+                                    <HiDotsVertical />
                                   </button>
                                   {openMenuId === post.id && (
                                     <div className="menu-dropdown">
@@ -412,13 +494,13 @@ export default function Home() {
                                         className="menu-item" 
                                         onClick={() => handleEditPost(post)}
                                       >
-                                        <MdEdit /> Edit
+                                        <HiPencil /> Edit
                                       </button>
                                       <button 
                                         className="menu-item delete" 
                                         onClick={() => handleDeletePost(post.id)}
                                       >
-                                        <MdDelete /> Delete
+                                        <HiTrash /> Delete
                                       </button>
                                     </div>
                                   )}
@@ -472,13 +554,19 @@ export default function Home() {
                                 className={`action-btn ${post.liked ? 'liked' : ''}`}
                                 onClick={() => handleLikePost(post.id)}
                               >
-                                👍 Like ({post.likes_count})
+                                <HiHeart className={post.liked ? 'liked-icon' : ''} /> 
+                                <span>Like ({post.likes_count})</span>
                               </button>
                               <button 
                                 className="action-btn"
                                 onClick={() => toggleComments(post.id)}
                               >
-                                💬 Comment ({post.comments_count})
+                                <HiChat /> 
+                                <span>Comment ({post.comments_count})</span>
+                              </button>
+                              <button className="action-btn" onClick={() => handleSharePost(post.id)}>
+                                <HiShare /> 
+                                <span>Share</span>
                               </button>
                             </div>
                             
@@ -513,7 +601,17 @@ export default function Home() {
                                     
                                     return (
                                       <div key={comment.id} className="comment">
-                                        <div className="comment-avatar">{commentInitial}</div>
+                                        <div className="comment-avatar">
+                                          {comment.author?.avatar_url ? (
+                                            <img
+                                              src={`http://localhost:8000${comment.author.avatar_url}`}
+                                              alt={commentAuthor}
+                                              style={{width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover'}}
+                                            />
+                                          ) : (
+                                            comment.author?.job_role === 'company' ? (comment.author?.company_name?.[0] || 'C') : commentInitial
+                                          )}
+                                        </div>
                                         <div className="comment-content">
                                           <div className="comment-author">{commentAuthor}</div>
                                           <div className="comment-text">{comment.text}</div>
@@ -553,7 +651,7 @@ export default function Home() {
                 </div>
               )}
               {activeTab === "network" && <Network user={user} />}
-              {activeTab === "notifications" && <Notifications />}
+              {activeTab === "notifications" && <Notifications onNavigateToPost={handleNavigateToPost} />}
               {activeTab === "posts" && <Posts user={user} />}
               {activeTab === "profile" && <Profile user={user} onProfileUpdate={handleProfileUpdate} />}
             </div>
@@ -606,15 +704,15 @@ export default function Home() {
         <div className="lightbox-overlay" onClick={closeLightbox}>
           <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
             <button className="lightbox-close" onClick={closeLightbox}>
-              <MdClose />
+              <HiX />
             </button>
             {lightbox.images.length > 1 && (
               <>
                 <button className="lightbox-nav prev" onClick={prevImage}>
-                  <MdArrowBack />
+                  <HiChevronLeft />
                 </button>
                 <button className="lightbox-nav next" onClick={nextImage}>
-                  <MdArrowForward />
+                  <HiChevronRight />
                 </button>
               </>
             )}
@@ -628,6 +726,43 @@ export default function Home() {
                 {lightbox.currentIndex + 1} / {lightbox.images.length}
               </div>
             )}
+          </div>
+        </div>
+      )}
+      
+      {/* Share Modal */}
+      {showShareModal && (
+        <div className="share-modal-overlay">
+          <div className="share-modal">
+            <div className="share-modal-header">
+              <h3>Share Post</h3>
+              <button className="close-btn" onClick={() => setShowShareModal(false)}>×</button>
+            </div>
+            <div className="share-modal-body">
+              <div className="users-list">
+                {users.map(user => (
+                  <div key={user.id} className="user-item">
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.includes(user.id)}
+                      onChange={() => handleUserSelect(user.id)}
+                    />
+                    <span className="user-name">{user.full_name}</span>
+                    <span className="user-role">({user.job_role})</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="share-modal-footer">
+              <button className="cancel-btn" onClick={() => setShowShareModal(false)}>Cancel</button>
+              <button 
+                className="share-btn" 
+                onClick={handleSubmitShare}
+                disabled={selectedUsers.length === 0}
+              >
+                Share ({selectedUsers.length})
+              </button>
+            </div>
           </div>
         </div>
       )}

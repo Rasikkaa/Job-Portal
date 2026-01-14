@@ -1,17 +1,24 @@
+import { HiHome, HiUsers, HiBriefcase, HiBell, HiDocumentText, HiUser, HiKey, HiLogout } from 'react-icons/hi';
+
 export default function Header({ activeTab, setActiveTab, onLogout, onChangePassword }) {
   const navItems = [
-    { id: "home", label: "Home", icon: "🏠" },
-    { id: "network", label: "Network", icon: "👥" },
-    { id: "jobs", label: "Jobs", icon: "💼" },
-    { id: "notifications", label: "Notifications", icon: "🔔" },
-    { id: "posts", label: "Posts", icon: "📝" }
+    { id: "home", label: "Home", icon: HiHome },
+    { id: "network", label: "Network", icon: HiUsers },
+    { id: "jobs", label: "Jobs", icon: HiBriefcase },
+    { id: "notifications", label: "Notifications", icon: HiBell },
+    { id: "posts", label: "Posts", icon: HiDocumentText }
   ];
 
   return (
     <header className="header">
       <div className="header-container">
         <div className="header-left">
-          <h1 className="header-logo" onClick={() => setActiveTab("home")} style={{cursor: "pointer"}}>Job Portal</h1>
+          <div className="logo-container" onClick={() => setActiveTab("home")}>
+            <div className="logo-icon">
+              <HiBriefcase />
+            </div>
+            <h1 className="header-logo">Jobo</h1>
+          </div>
         </div>
 
         <nav className="header-nav">
@@ -21,7 +28,7 @@ export default function Header({ activeTab, setActiveTab, onLogout, onChangePass
               className={`nav-btn ${activeTab === item.id ? "nav-btn-active" : ""}`}
               onClick={() => setActiveTab(item.id)}
             >
-              <span className="nav-icon">{item.icon}</span>
+              <item.icon className="nav-icon" />
               <span className="nav-label">{item.label}</span>
             </button>
           ))}
@@ -29,15 +36,15 @@ export default function Header({ activeTab, setActiveTab, onLogout, onChangePass
 
         <div className="header-right">
           <button className="nav-btn" onClick={() => setActiveTab("profile")}>
-            <span className="nav-icon">👤</span>
+            <HiUser className="nav-icon" />
             <span className="nav-label">Profile</span>
           </button>
           <button className="action-btn" onClick={onChangePassword}>
-            <span className="action-icon">🔑</span>
+            <HiKey className="action-icon" />
             <span className="action-label">Change Password</span>
           </button>
           <button className="action-btn logout-btn" onClick={onLogout}>
-            <span className="action-icon">🚪</span>
+            <HiLogout className="action-icon" />
             <span className="action-label">Logout</span>
           </button>
         </div>
