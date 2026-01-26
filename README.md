@@ -103,7 +103,7 @@ Job Portal/
 ### Backend
 - Django 4.x
 - Django REST Framework
-- SQLite (default database)
+- PostgreSQL (Database)
 - Pillow (image processing)
 - CORS headers for cross-origin requests
 
